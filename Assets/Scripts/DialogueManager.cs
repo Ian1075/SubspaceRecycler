@@ -1,20 +1,22 @@
-// DialogueManager.cs --- 一個專門負責對話的管理器
+// DialogueManager.cs --- 全新升級版
 using UnityEngine;
-using TMPro; // 記得引用 TextMeshPro
+using TMPro;
+using System.Collections.Generic; // 引用這個命名空間來使用 Queue (隊列)
 
 public class DialogueManager : MonoBehaviour
 {
     [Header("對話 UI 元件")]
-    [SerializeField] private GameObject dialoguePanel; // 整個對話框的父物件
-    [SerializeField] private TextMeshProUGUI dialogueText; // 顯示文字的元件
+    [SerializeField] private GameObject dialoguePanel;
+    [SerializeField] private TextMeshProUGUI dialogueText;
 
-    private PlayerMovement playerMovement; // 儲存玩家移動腳本的引用
+    private Queue<string> sentences; // 一個用來存放所有待顯示句子的「隊列」
+    private bool isDialogueActive = false;
+    private PlayerMovement playerMovement;
 
     void Start()
     {
-        // 確保對話框一開始是關閉的
+        sentences = new Queue<string>();
         dialoguePanel.SetActive(false);
-        // 尋找玩家的移動腳本，為將來的「暫停移動」做準備
         playerMovement = FindObjectOfType<PlayerMovement>();
     }
 
@@ -22,27 +24,56 @@ public class DialogueManager : MonoBehaviour
     {
     }
 
-    // 這是給其他腳本 (例如 Interactable.cs) 呼叫的公開函式
-    public void ShowDialogue(string message)
+    // --- 新的對話啟動函式 ---
+    public void StartDialogue(string[] dialogueLines)
     {
-        dialoguePanel.SetActive(true);
-        dialogueText.text = message;
+        // 如果正在對話中，就不要啟動新的對話
+        if (isDialogueActive) return;
 
-        // (可選，但推薦) 顯示對話時，禁止玩家移動
-        if (playerMovement != null)
+        isDialogueActive = true;
+        dialoguePanel.SetActive(true);
+        if (playerMovement != null) playerMovement.DisableMovement();
+
+        sentences.Clear(); // 清空之前的對話
+
+        // 將所有對話句子依序放入隊列中
+        foreach (string sentence in dialogueLines)
         {
-            playerMovement.DisableMovement();
+            sentences.Enqueue(sentence);
         }
+
+        // 開始顯示第一句話
+        DisplayNextSentence();
     }
 
-    public void HideDialogue()
+    // --- 顯示下一句話的核心邏輯 ---
+    public void DisplayNextSentence()
     {
-        dialoguePanel.SetActive(false);
-
-        // (可選，但推薦) 關閉對話時，恢復玩家移動
-        if (playerMovement != null)
+        // 如果隊列中已經沒有句子了，就結束對話
+        if (sentences.Count == 0)
         {
-            playerMovement.EnableMovement();
+            EndDialogue();
+            return;
         }
+
+        // 從隊列中取出第一句話
+        string sentenceToDisplay = sentences.Dequeue();
+        // 顯示在畫面上
+        dialogueText.text = sentenceToDisplay;
+    }
+
+    // --- 結束對話的函式 ---
+    void EndDialogue()
+    {
+        isDialogueActive = false;
+        dialoguePanel.SetActive(false);
+        if (playerMovement != null) playerMovement.EnableMovement();
+        Debug.Log("對話結束。");
+    }
+
+    // 供外部查詢狀態的函式
+    public bool IsDialogueActive()
+    {
+        return isDialogueActive;
     }
 }

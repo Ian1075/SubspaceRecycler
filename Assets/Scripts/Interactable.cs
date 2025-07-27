@@ -5,7 +5,7 @@ public class Interactable : MonoBehaviour
 {
     // [TextArea] 讓文字欄位在 Inspector 中變大，方便輸入多行文字
     [SerializeField, TextArea(3, 5)] 
-    private string messageToShow; // 互動時要顯示的訊息
+    private string[] dialogueLines; 
     private DialogueManager dialogueManager;
     private bool isInRange = false; // 玩家是否在互動範圍內
     private bool isDialogueActive = false;
@@ -18,21 +18,16 @@ public class Interactable : MonoBehaviour
 
     void Update()
     {
-        if (isInRange && Input.GetKeyDown(KeyCode.E))
+        // 確保 dialogueManager 存在，並且當前沒有正在進行的對話
+        if (dialogueManager != null && isInRange && Input.GetKeyDown(KeyCode.E))
         {
-            // 呼叫 DialogueManager 的 ShowDialogue 函式
-            if (dialogueManager != null)
+            if (!dialogueManager.IsDialogueActive())
             {
-                if (!isDialogueActive)
-                {
-                    isDialogueActive = true;
-                    dialogueManager.ShowDialogue(messageToShow);
-                }
-                else
-                {
-                    isDialogueActive = false;
-                    dialogueManager.HideDialogue();
-                }
+                dialogueManager.StartDialogue(dialogueLines);
+            }
+            else
+            {
+                dialogueManager.DisplayNextSentence();
             }
         }
     }
