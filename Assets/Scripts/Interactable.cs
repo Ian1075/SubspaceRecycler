@@ -1,14 +1,16 @@
 // Interactable.cs
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Interactable : MonoBehaviour
 {
     // [TextArea] 讓文字欄位在 Inspector 中變大，方便輸入多行文字
     [SerializeField, TextArea(3, 5)] 
     private string[] dialogueLines; 
+    [SerializeField] private UnityEvent onInteract;
     private DialogueManager dialogueManager;
     private bool isInRange = false; // 玩家是否在互動範圍內
-    private bool isDialogueActive = false;
+    //private bool isDialogueActive = false;
 
     void Start()
     {
@@ -29,6 +31,7 @@ public class Interactable : MonoBehaviour
             {
                 dialogueManager.DisplayNextSentence();
             }
+            onInteract.Invoke();
         }
     }
 
